@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mla.dispatch_record.v1",
+  "title": "Dispatch Record",
+  "type": "object",
+  "required": ["idempotency_key", "route", "target_agent", "status", "created_at"],
+  "properties": {
+    "idempotency_key": { "type": "string" },
+    "route": { "type": "string", "enum": ["pre_meeting", "post_meeting", "cancel_notice", "meeting_changed"] },
+    "target_agent": { "type": "string", "enum": ["mla-pre-agent", "mla-post-agent", "mla-card-agent"] },
+    "status": { "type": "string", "enum": ["spawned", "done", "failed", "skipped"] },
+    "run_id": { "type": "string" },
+    "child_session_key": { "type": "string" },
+    "result_summary": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": "string", "format": "date-time" }
+  }
+}

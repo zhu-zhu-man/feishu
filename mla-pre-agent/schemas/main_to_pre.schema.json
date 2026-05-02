@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mla.main_to_pre.v1",
+  "title": "Main Agent → Pre Agent Input",
+  "type": "object",
+  "required": ["schema_version", "route", "meeting", "reason", "idempotency_key"],
+  "properties": {
+    "schema_version": { "const": "mla.main_to_pre.v1" },
+    "route": { "const": "pre_meeting" },
+    "meeting": {
+      "type": "object",
+      "required": ["event_id", "summary", "start_time"],
+      "properties": {
+        "event_id": { "type": "string", "description": "Calendar event ID, includes _0 suffix" },
+        "summary": { "type": "string", "description": "Meeting title" },
+        "start_time": {
+          "type": "object",
+          "required": ["datetime"],
+          "properties": {
+            "datetime": { "type": "string", "format": "date-time", "description": "ISO 8601 with timezone" },
+            "timezone": { "type": "string" }
+          }
+        },
+        "end_time": {
+          "type": "object",
+          "properties": {
+            "datetime": { "type": "string", "format": "date-time" },
+            "timezone": { "type": "string" }
+          }
+        },
+        "app_link": { "type": "string", "format": "uri" },
+        "vchat_url": { "type": "string", "format": "uri" },
+        "description": { "type": "string" },
+        "organizer": {
+          "type": "object",
+          "properties": {
+            "display_name": { "type": "string" },
+            "open_id": { "type": "string" }
+          }
+        },
+        "status": { "type": "string" }
+      }
+    },
+    "reason": { "type": "string", "enum": ["new_meeting", "time_changed", "retry"] },
+    "idempotency_key": { "type": "string" }
+  }
+}
