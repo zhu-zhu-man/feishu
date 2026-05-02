@@ -1,0 +1,30 @@
+{
+  "index_version": "1.0",
+  "build_mode": "bootstrap",
+  "doc_count": 0,
+  "last_build_at": null,
+  "last_update_at": null,
+  "seed_queries": [
+    "agent",
+    "MLA",
+    "会议助手",
+    "Q2 需求",
+    "产品评审",
+    "agent 会议",
+    "MLA agent",
+    "智能助手",
+    "Pre Agent",
+    "Main Agent",
+    "项目方案",
+    "技术设计",
+    "需求文档"
+  ],
+  "settings": {
+    "drive_page_size": 10,
+    "max_docs_per_query": 10,
+    "summary_max_chars": 200,
+    "max_keywords_per_doc": 20,
+    "max_entities_per_doc": 15,
+    "max_meeting_hints_per_doc": 10
+  }
+}

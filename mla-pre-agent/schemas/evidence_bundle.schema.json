@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mla.evidence_bundle.v1",
+  "title": "Evidence Bundle — pre_retrieve output",
+  "description": "Collected evidence from catalog + feishu search + doc fetch, ready for brief generation",
+  "type": "object",
+  "required": ["schema_version", "idempotency_key", "meeting", "catalog_candidates", "feishu_search_candidates", "fetched_evidence", "retrieval_trace"],
+  "properties": {
+    "schema_version": { "const": "mla.evidence_bundle.v1" },
+    "idempotency_key": { "type": "string" },
+    "meeting": {
+      "type": "object",
+      "required": ["event_id", "summary"],
+      "properties": {
+        "event_id": { "type": "string" },
+        "summary": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "catalog_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "doc_token": { "type": "string" },
+          "title": { "type": "string" },
+          "url": { "type": "string" },
+          "score": { "type": "number" },
+          "match_reasons": { "type": "array", "items": { "type": "string" } },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    "feishu_search_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "doc_token": { "type": "string" },
+          "title": { "type": "string" },
+          "url": { "type": "string" },
+          "source": { "type": "string", "enum": ["drive_search", "docs_search"] }
+        }
+      }
+    },
+    "fetched_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["doc_token", "title", "url", "fetch_type", "raw_path", "raw_sha256"],
+        "properties": {
+          "doc_token": { "type": "string" },
+          "title": { "type": "string" },
+          "url": { "type": "string" },
+          "fetch_type": { "type": "string", "enum": ["outline", "keyword", "full"] },
+          "raw_path": { "type": "string" },
+          "raw_sha256": { "type": "string" },
+          "excerpts": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "retrieval_trace": {
+      "type": "object",
+      "required": ["commands"],
+      "properties": {
+        "catalog": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "index_path": { "type": "string" },
+            "index_doc_count": { "type": "integer" },
+            "index_updated_at": { "type": "string" },
+            "candidates_found": { "type": "integer" },
+            "top_matches": { "type": "array" }
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "argv", "raw_path", "raw_sha256", "result_count"],
+            "properties": {
+              "name": { "type": "string", "enum": ["drive_search", "docs_search", "docs_fetch", "vc_search", "vc_notes"] },
+              "argv": { "type": "array", "items": { "type": "string" } },
+              "raw_path": { "type": "string" },
+              "raw_sha256": { "type": "string" },
+              "exit_code": { "type": "integer" },
+              "result_count": { "type": "integer" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

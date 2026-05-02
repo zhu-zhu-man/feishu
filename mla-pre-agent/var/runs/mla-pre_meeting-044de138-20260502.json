@@ -1,0 +1,43 @@
+{
+  "schema_version": "mla.pre_result.v1",
+  "idempotency_key": "mla-pre_meeting-044de138-20260502",
+  "status": "partial",
+  "warnings": ["NO_RELATED_DOCS"],
+  "background_items": [
+    {
+      "content": "验证 Pre Agent 的 Input Guard 和 command receipts 是否生效。Pre Agent 必须执行 drive +search 至少一次，不得跳过检索直接生成简报。",
+      "source": {
+        "type": "calendar_description",
+        "title": "【MLA测试】Pre Agent 强制检索验证",
+        "url": "https://applink.feishu.cn/client/calendar/event/detail?calendarId=7631478149625908434&key=044de138-7627-486d-acf6-fe2b142767a7&originalTime=0&startTime=1777734900"
+      }
+    }
+  ],
+  "history_decisions": [],
+  "open_risks": [],
+  "retrieval_trace": {
+    "commands": [
+      {
+        "command": "lark-cli drive +search --query \"MLA Pre Agent 检索验证\" --doc_types \"docx,wiki\" --sort edit_time --page-size 10 --as user --format json",
+        "raw_path": "var/raw/drive/search_mla_pre_test.json",
+        "raw_sha256": "C115D50C8B5BF52FD4A85EDCB70346653BD8DE697146BC471F8778760B5FC919",
+        "exit_code": 0,
+        "timestamp": "2026-05-02T23:07:00+08:00"
+      },
+      {
+        "command": "lark-cli docs +search --query \"MLA Pre Agent 检索验证\" --filter '{\"doc_types\":[\"DOCX\",\"WIKI\"],\"sort_type\":\"EDIT_TIME\"}' --as user --format json",
+        "raw_path": "var/raw/docs/search_mla_pre_test.json",
+        "raw_sha256": "FF8DD02225EA2BAD7F0E00559D3E2C55DB10766DBD9800AF404E403F31B763F7",
+        "exit_code": 0,
+        "timestamp": "2026-05-02T23:08:00+08:00"
+      },
+      {
+        "command": "lark-cli vc +search --query \"MLA Pre Agent\" --start \"2026-04-02\" --end \"2026-05-02\" --page-size 10 --as user --format json",
+        "raw_path": "var/raw/vc/search_mla_pre_test.json",
+        "raw_sha256": "9C23179A6EBA30BC110B5BD936C28246D3958359693D7A02B9BCE85E17DD4FFA",
+        "exit_code": 0,
+        "timestamp": "2026-05-02T23:08:00+08:00"
+      }
+    ]
+  }
+}

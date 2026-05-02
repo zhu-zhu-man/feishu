@@ -109,12 +109,60 @@
     },
     "retrieval_trace": {
       "type": "object",
+      "required": ["commands", "docs_searched"],
       "properties": {
         "keywords": { "type": "array", "items": { "type": "string" } },
-        "docs_searched": { "type": "integer" },
-        "docs_read": { "type": "integer" },
-        "meetings_searched": { "type": "integer" },
-        "minutes_read": { "type": "integer" }
+        "catalog": {
+          "type": "object",
+          "description": "Local Doc Catalog usage trace",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "index_path": { "type": "string" },
+            "index_doc_count": { "type": "integer" },
+            "index_updated_at": { "type": "string" },
+            "candidates_found": { "type": "integer" },
+            "top_matches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "score": { "type": "number" },
+                  "match_reasons": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "commands": {
+          "type": "array",
+          "description": "每条实际执行的 CLI 命令的收据。没有 commands 的 retrieval_trace 是无效的。",
+          "items": {
+            "type": "object",
+            "required": ["name", "argv", "raw_path", "raw_sha256", "result_count"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "enum": ["drive_search", "docs_search", "docs_fetch", "vc_search", "vc_notes"]
+              },
+              "argv": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Full command argv for reproducibility"
+              },
+              "raw_path": { "type": "string", "description": "raw 文件路径" },
+              "raw_sha256": { "type": "string", "description": "raw 文件的 SHA256 hash" },
+              "exit_code": { "type": "integer" },
+              "status": { "type": "string", "enum": ["ok", "empty", "error"] },
+              "result_count": { "type": "integer", "description": "实际返回条数" }
+            }
+          }
+        },
+        "docs_searched": { "type": "integer", "description": "所有 drive_search + docs_search 返回条数之和" },
+        "docs_read": { "type": "integer", "description": "docs +fetch 调用次数" },
+        "meetings_searched": { "type": "integer", "description": "vc +search 返回条数之和" },
+        "minutes_read": { "type": "integer", "description": "会议纪要读取次数" },
+        "catalog_hits": { "type": "integer", "description": "本地 catalog 命中数" }
       }
     },
     "warnings": {

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mla.doc_summary.v1",
+  "title": "Doc Catalog Entry",
+  "description": "A single document's catalog entry in doc_summaries.jsonl",
+  "type": "object",
+  "required": [
+    "doc_token", "title", "url", "doc_type",
+    "summary", "keywords", "entities", "meeting_hints",
+    "last_seen_at"
+  ],
+  "properties": {
+    "doc_token": { "type": "string", "description": "Feishu doc token" },
+    "title": { "type": "string" },
+    "url": { "type": "string" },
+    "doc_type": { "type": "string", "enum": ["docx", "wiki", "sheet", "minute", "other"] },
+    "summary": { "type": "string", "description": "100-200 char human-readable summary generated from doc outline/keywords" },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 30 },
+      "maxItems": 20,
+      "description": "Extracted keywords for matching"
+    },
+    "entities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "maxItems": 15,
+      "description": "Named entities: project names, tool names, team names, agent IDs, etc."
+    },
+    "meeting_hints": {
+      "type": "array",
+      "items": { "type": "string" },
+      "maxItems": 10,
+      "description": "Meeting titles or topics this doc is likely relevant to"
+    },
+    "edit_time": { "type": "string", "description": "ISO 8601, from drive +search edit_time field" },
+    "last_seen_at": { "type": "string", "description": "ISO 8601, when this entry was created/updated" },
+    "source_raw_path": { "type": "string", "description": "Path to raw drive +search result that discovered this doc" }
+  }
+}
