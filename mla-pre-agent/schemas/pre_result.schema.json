@@ -112,28 +112,6 @@
       "required": ["commands", "docs_searched"],
       "properties": {
         "keywords": { "type": "array", "items": { "type": "string" } },
-        "catalog": {
-          "type": "object",
-          "description": "Local Doc Catalog usage trace",
-          "properties": {
-            "enabled": { "type": "boolean" },
-            "index_path": { "type": "string" },
-            "index_doc_count": { "type": "integer" },
-            "index_updated_at": { "type": "string" },
-            "candidates_found": { "type": "integer" },
-            "top_matches": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "title": { "type": "string" },
-                  "score": { "type": "number" },
-                  "match_reasons": { "type": "array", "items": { "type": "string" } }
-                }
-              }
-            }
-          }
-        },
         "commands": {
           "type": "array",
           "description": "每条实际执行的 CLI 命令的收据。没有 commands 的 retrieval_trace 是无效的。",
@@ -161,8 +139,7 @@
         "docs_searched": { "type": "integer", "description": "所有 drive_search + docs_search 返回条数之和" },
         "docs_read": { "type": "integer", "description": "docs +fetch 调用次数" },
         "meetings_searched": { "type": "integer", "description": "vc +search 返回条数之和" },
-        "minutes_read": { "type": "integer", "description": "会议纪要读取次数" },
-        "catalog_hits": { "type": "integer", "description": "本地 catalog 命中数" }
+        "minutes_read": { "type": "integer", "description": "会议纪要读取次数" }
       }
     },
     "warnings": {

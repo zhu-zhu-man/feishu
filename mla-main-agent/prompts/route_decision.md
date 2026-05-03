@@ -6,7 +6,7 @@
 
 ## Step 1: Idempotency Check
 
-检查 `var/state/dispatched.json`，如果 idempotency_key 已存在 → **skip**，不重复派发。
+检查 `var/dispatched.json`，如果 idempotency_key 已存在 → **skip**，不重复派发。
 
 ## Step 2: Route Decision Matrix
 
@@ -21,7 +21,7 @@
 
 ## Step 3: Idempotency Check
 
-检查 `var/state/dispatched.json`，如果 idempotency_key 已存在 → **skip**，不重复派发。
+检查 `var/dispatched.json`，如果 idempotency_key 已存在 → **skip**，不重复派发。
 
 ## Output
 

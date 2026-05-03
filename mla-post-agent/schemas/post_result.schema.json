@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mla.post_result.v1",
+  "title": "Post Agent → Main/Card Agent — Post-Meeting Structured Output",
+  "description": "Post Agent 整理原始纪要数据后的结构化输出，供 Card Agent 直接填入卡片模板。不包含任何卡片渲染逻辑。",
+  "type": "object",
+  "required": ["schema_version", "type", "status", "idempotency_key", "meeting", "retrieval_trace"],
+  "properties": {
+    "schema_version": { "const": "mla.post_result.v1" },
+    "type": { "const": "post_meeting_summary" },
+    "status": {
+      "type": "string",
+      "enum": ["ok", "partial", "error"],
+      "description": "ok=完整纪要, partial=部分数据缺失, error=输入无效或全部失败"
+    },
+    "idempotency_key": { "type": "string" },
+    "error_code": {
+      "type": "string",
+      "description": "仅 status=error 时有值"
+    },
+    "meeting": {
+      "type": "object",
+      "required": ["event_id", "summary", "start_time", "end_time"],
+      "properties": {
+        "event_id": { "type": "string" },
+        "meeting_id": { "type": "string", "description": "VC meeting ID (如 302 614 221)" },
+        "summary": { "type": "string" },
+        "description": { "type": "string" },
+        "start_time": {
+          "type": "object",
+          "required": ["datetime", "timezone"],
+          "properties": {
+            "datetime": { "type": "string" },
+            "timezone": { "type": "string" }
+          }
+        },
+        "end_time": {
+          "type": "object",
+          "required": ["datetime", "timezone"],
+          "properties": {
+            "datetime": { "type": "string" },
+            "timezone": { "type": "string" }
+          }
+        },
+        "duration_minutes": { "type": "integer" },
+        "app_link": { "type": "string" },
+        "vchat_url": { "type": "string" },
+        "organizer": {
+          "type": "object",
+          "properties": {
+            "display_name": { "type": "string" },
+            "open_id": { "type": "string" }
+          }
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "display_name": { "type": "string" },
+              "open_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "core_conclusions": {
+      "type": "array",
+      "description": "从会议纪要中提取的核心结论，每条一句话",
+      "items": { "type": "string" }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "会议中做出的通用决策事项",
+      "items": { "type": "string" }
+    },
+    "action_items": {
+      "type": "array",
+      "description": "待办事项，id/assignee/task 对应卡片表格列",
+      "items": {
+        "type": "object",
+        "required": ["id", "assignee", "task"],
+        "properties": {
+          "id": { "type": "string", "description": "序号 emoji: 1️⃣ 2️⃣ 3️⃣" },
+          "assignee": { "type": "string", "description": "负责人姓名或'全员'" },
+          "task": { "type": "string", "description": "待办描述" }
+        }
+      }
+    },
+    "key_discussion_points": {
+      "type": "array",
+      "description": "关键讨论点摘要",
+      "items": { "type": "string" }
+    },
+    "related_links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "url"],
+        "properties": {
+          "title": { "type": "string" },
+          "url": { "type": "string" },
+          "type": { "type": "string", "enum": ["minutes", "doc", "vc", "calendar", "wiki"] }
+        }
+      }
+    },
+    "retrieval_trace": {
+      "type": "object",
+      "required": ["commands"],
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "argv", "raw_path", "raw_sha256"],
+            "properties": {
+              "name": { "type": "string" },
+              "argv": { "type": "array", "items": { "type": "string" } },
+              "raw_path": { "type": "string" },
+              "raw_sha256": { "type": "string" },
+              "exit_code": { "type": "integer" },
+              "status": { "type": "string" },
+              "result_count": { "type": "integer" }
+            }
+          }
+        },
+        "notes_fetched": { "type": "boolean" },
+        "transcript_used": { "type": "boolean" },
+        "docs_read": { "type": "integer" },
+        "participants_resolved": { "type": "boolean" }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

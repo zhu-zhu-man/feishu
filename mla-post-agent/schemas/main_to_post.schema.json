@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "mla.main_to_post.v1",
+  "title": "Main Agent → Post Agent — Post-Meeting Summary Request",
+  "description": "Main Agent 派发给 Post Agent 的会后纪要请求。meeting 数据来自 calendar +agenda + vc +search。",
+  "type": "object",
+  "required": ["schema_version", "route", "meeting", "reason", "idempotency_key"],
+  "properties": {
+    "schema_version": { "const": "mla.main_to_post.v1" },
+    "route": { "const": "post_meeting" },
+    "meeting": {
+      "type": "object",
+      "required": ["event_id", "meeting_id", "summary", "start_time"],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "description": "来自 calendar +agenda 的 event_id"
+        },
+        "meeting_id": {
+          "type": "string",
+          "description": "VC meeting ID（数字格式，如 302 614 221），来自 vc +search"
+        },
+        "summary": {
+          "type": "string",
+          "description": "会议标题"
+        },
+        "description": { "type": "string" },
+        "start_time": {
+          "type": "object",
+          "required": ["datetime"],
+          "properties": {
+            "datetime": { "type": "string", "format": "date-time" },
+            "timezone": { "type": "string" }
+          }
+        },
+        "end_time": {
+          "type": "object",
+          "properties": {
+            "datetime": { "type": "string", "format": "date-time" },
+            "timezone": { "type": "string" }
+          }
+        },
+        "app_link": { "type": "string" },
+        "vchat_url": { "type": "string" },
+        "organizer": {
+          "type": "object",
+          "properties": {
+            "display_name": { "type": "string" },
+            "open_id": { "type": "string" }
+          }
+        },
+        "participants": {
+          "type": "array",
+          "description": "参会人 open_id 列表（从 vc +search 或 calendar attendees 提取）",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "reason": {
+      "type": "string",
+      "enum": ["ended", "retry"]
+    },
+    "idempotency_key": {
+      "type": "string",
+      "description": "幂等键，格式 mla-post_meeting-<event_id_short>-<yyyymmdd>"
+    },
+    "raw_files": {
+      "type": "object",
+      "description": "Main Agent 预取的原始 CLI 结果文件路径。Post Agent 直接读取这些文件，不重复调用 CLI。",
+      "required": ["vc_search", "vc_notes", "note_doc", "verbatim_doc"],
+      "properties": {
+        "vc_search": { "type": "string", "description": "vc +search 原始 JSON 路径" },
+        "vc_notes": { "type": "string", "description": "vc +notes 原始 JSON 路径" },
+        "note_doc": { "type": "string", "description": "docs +fetch AI 智能纪要 原始 JSON 路径" },
+        "verbatim_doc": { "type": "string", "description": "docs +fetch 逐字稿 原始 JSON 路径" },
+        "calendar": { "type": "string", "description": "calendar +agenda 原始 JSON 路径（可选）" }
+      }
+    }
+  }
+}

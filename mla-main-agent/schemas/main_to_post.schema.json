@@ -40,6 +40,17 @@
       }
     },
     "reason": { "type": "string", "enum": ["ended", "retry"] },
-    "idempotency_key": { "type": "string" }
+    "idempotency_key": { "type": "string" },
+    "raw_files": {
+      "type": "object",
+      "description": "Main Agent 预取的原始 CLI 结果路径。Post Agent 直接读取，不重复调用 CLI。",
+      "properties": {
+        "vc_search": { "type": "string" },
+        "vc_notes": { "type": "string" },
+        "note_doc": { "type": "string" },
+        "verbatim_doc": { "type": "string" },
+        "calendar": { "type": "string" }
+      }
+    }
   }
 }
