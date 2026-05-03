@@ -106,9 +106,6 @@ def main():
         "--data", "@api_body.json", "--as", "bot",
     ], capture_output=True, encoding="utf-8", errors="replace", timeout=30, cwd=VAR)
 
-    print(f"Return code: {r.returncode}")
-    print(f"Stdout: {r.stdout}")
-    print(f"Stderr: {r.stderr}")
     stdout = (r.stdout or "").strip() or (r.stderr or "").strip()
     try:
         resp = json.loads(stdout)

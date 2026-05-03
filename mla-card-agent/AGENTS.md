@@ -2,64 +2,28 @@
 
 ## Mission
 
-Meeting Life Agent 卡片投递代理。
-Read Pre/Post result → Render Feishu interactive card → Send → Return receipt.
+卡片发送器。被 Pre/Post/Main Agent spawn → 收文本 → 填模板 → `lark-cli api` 发送。
 
-**You are a card renderer + sender, nothing more.**
+## Allowed
 
-## Agent Boundary
+- `uv run python scripts/send.py` — 一条命令完成全部（解析文本、填模板、发送）
+- Read `templates/*.json` — 卡片模板
 
-**Allowed:**
-- Read local JSON files (pre_result.json, post_result.json)
-- `lark-cli im +messages-send` — send interactive cards
-- `uv run python scripts/render_card.py` — render card from template
-- `uv run python scripts/send_card.py` — send card via CLI
-- `uv run python scripts/validate_card.py` — validate input/output
+## Forbidden
 
-**Forbidden:**
-- `lark-cli calendar` / `docs` / `drive` / `vc` / `task` / `base` / `sheets`
-- Generate content or analysis
-- Modify Pre/Post Agent output
-- Send non-interactive messages
-- Skip validation
-
-## Input
-
-`mla.main_to_card.v1` JSON with:
-- `source.pre_result_path` — path to Pre Agent output
-- `recipient` — who to send to (user or chat)
-- `delivery` — how to send (im, interactive)
-- `meeting` — meeting metadata for the card
-
-## Output
-
-`mla.card_result.v1` JSON with:
-- `delivery.message_id` — from actual IM response
-- `artifacts.card_json_path` — rendered card JSON
-- `artifacts.send_raw_path` — raw IM send response
-
-## Scripts
-
-| Script | Usage |
-|--------|-------|
-| `render_card.py` | `uv run python scripts/render_card.py <pre_result.json> <template_name>` |
-| `send_card.py` | `uv run python scripts/send_card.py <main_to_card.json> <card_json>` |
-| `validate_card.py` | `uv run python scripts/validate_card.py input\|result <file.json>` |
-
-## Templates
-
-| Template | Route trigger |
-|----------|--------------|
-| `templates/pre_meeting_card.json` | `send_pre_meeting_card` |
-| `templates/post_meeting_card.json` | `send_post_meeting_card` |
-| `templates/cancel_notice_card.json` | `send_cancel_notice_card` |
+- `render_card.py` / `send_card.py` / `validate_card.py` — 已删除，不要用
+- `lark-cli im +messages-send` — 用 `lark-cli api` 代替
+- `lark-cli calendar` / `docs` / `drive` / `vc` / `task`
+- 往根目录写文件 — 只写 `var/api_body.json`（send.py 自动清理）
 
 ## Workflow
 
 ```
-main_to_card.v1 → validate → read pre_result → render card → save card.json → send → save raw → return card_result.v1
+收到 task 文本 → uv run python scripts/send.py "<文本>" <模板名> <open_id> ... → 返回 message_id
 ```
 
-## CLI Identity
+## send.py 用法
 
-`lark-cli im +messages-send --user-id <open_id> --msg-type interactive --content "<card_json>" --as user --format json`
+```bash
+uv run python scripts/send.py "<文本>" <pre_meeting|post_meeting|cancel_notice> <open_id> "<标题>" "<日期>" "<时间范围>" "<组织者>" "<描述>"
+```
