@@ -80,7 +80,7 @@ lark-cli vc +search --query "<query>" --start "<30天前>" --end "<会议日期>
 ```
 
 ```json
-{"agentId":"mla-card-agent","runtime":"subagent","context":"isolated","mode":"run","cleanup":"keep","runTimeoutSeconds":120,"task":"<上面那段文本>"}
+{"agentId":"mla-card-agent","runtime":"subagent","context":"isolated","mode":"run","cleanup":"keep","runTimeoutSeconds":180,"task":"<上面那段文本>"}
 ```
 
 ## 返回

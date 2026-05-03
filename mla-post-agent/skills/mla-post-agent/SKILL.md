@@ -131,6 +131,7 @@ lark-cli task +create \
 
 ## 返回
 
+Card Agent 返回后，输出：`会后纪要已发送，message_id: xxx`
 ```
 会后处理完成。
 - 已创建 N 条待办任务

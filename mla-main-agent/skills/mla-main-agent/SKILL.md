@@ -1,32 +1,46 @@
 ---
 name: mla-main-agent
-description: MLA 主控调度。宽窗口扫描 → 差集路由 → spawn Pre/Post/Card。
+description: MLA 主控调度。固定窗口扫描 → 去重分发 → spawn Pre/Post。
 ---
 
 # MLA Main Agent
 
-## ⛔ 收件人规则
-
-**所有卡片发给系统使用者本人，不是会议组织者。**
-Main Agent 在当前用户的 calendar 响应中提取自己的 open_id，作为 `user_open_id` 一路传给 Pre/Post/Card。
-
 ## 调度规则
 
 ```
-pre_meeting   → spawn Pre Agent（Pre 搜完自己 spawn Card Agent 发卡片）
-post_meeting  → 预取 VC 数据 → spawn Post Agent（Post 提取完自己 spawn Card Agent）
-cancel_notice → Main Agent 直接 spawn Card Agent 发取消通知
+pre_meeting  → spawn Pre Agent（Pre 搜完自己 spawn Card Agent 发卡片）
+post_meeting → spawn Post Agent（Post 自己检索 VC + 提取待办 + spawn Card Agent）
 ```
 
 **Pre 和 Post 会自己 spawn Card Agent。Main 不需要再转发。**
 
-## 状态
-
-两个文件：
+## 两个文件
 
 | 文件 | 用途 |
 |------|------|
-| `var/last_scan.json` | `{event_id: {end_time, hash, dispatched: []}}`，覆盖写。dispatched 记录已触发过的 route |
+| `var/last_scan.json` | 去重账本。只存当前窗口内会议已派发过哪些 route |
+| `var/events.jsonl` | 留痕日志。每次 spawn 追加一行 |
+
+### last_scan.json 结构
+
+```json
+{
+  "<event_id>": {
+    "dispatched": ["pre_meeting"]
+  }
+}
+```
+
+自清理机制：每次扫描结束后覆盖写，只写入当前窗口内的 event。滑出窗口的 event 自然消失，文件永不膨胀。
+
+### events.jsonl 结构
+
+```jsonl
+{"timestamp": 1714757940, "event_id": "xxx", "summary": "产品周会", "action": "spawn_pre_agent"}
+{"timestamp": 1714761540, "event_id": "xxx", "summary": "产品周会", "action": "spawn_post_agent"}
+```
+
+纯追加，不删除。Debug / 统计用。
 
 ## 工作流
 
@@ -40,30 +54,43 @@ lark-cli auth status --verify
 
 **你是系统使用者。所有卡片发给你自己，不是会议组织者。**
 
-从任意一个 calendar event 的 organizer 中提取你自己的 open_id（你就是会议组织者时）或直接使用你自己的身份。记为 `ME`。
+从任意一个 calendar event 的 organizer 中提取你自己的 open_id，记为 `ME`。
 
-### Step 2: 读上次状态
+### Step 2: 读取账本
 
-读 `var/last_scan.json` → `PREV`。不存在则 `{}`。
+读 `var/last_scan.json` → `STATE`。不存在则 `{}`。
 
-### Step 3: 宽窗口扫描
+### Step 3: 获取日历
 
 ```bash
-lark-cli calendar +agenda --start "<now_minus_35min_iso>" --end "<now_plus_30min_iso>" --as user --format json
+lark-cli calendar +agenda --start "<now-35min-iso>" --end "<now+30min-iso>" --as user --format json
 ```
 
-转成 `CURR[event_id] = {end_time: unix, hash: sha256(summary+start+end)}`。
+得到 `EVENTS` 列表。
 
-### Step 3: 差集路由
+### Step 4: 遍历决策 & Spawn
 
-| 条件 | 动作 |
-|------|------|
-| 在 CURR，不在 PREV，start_time > now，`pre_meeting` 未在 dispatched 中 | → Step 4a (pre_meeting) |
-| 在 CURR，end_time < now，`post_meeting` 未在 dispatched 中 | → Step 4b (post_meeting) |
-| 在 PREV，不在 CURR，end_time 未到，`cancel_notice` 未在 dispatched 中 | → Step 4c (cancel_notice) |
-| 已 dispatch | 忽略 |
+创建新账本 `NEXT = {}`。
 
-**每条 route 只触发一次。spawn 后立即把 route 加到 last_scan.json 的 dispatched 数组中。**
+对于 EVENTS 中的每个 event：
+
+```
+dispatched = STATE[event.id].dispatched  (不存在则为 [])
+
+1. Pre-meeting：
+   if event.start_time > now  AND  "pre_meeting" not in dispatched:
+       → spawn Pre Agent (Step 4a)
+       → dispatched.push("pre_meeting")
+       → events.jsonl 追加一行
+
+2. Post-meeting：
+   if event.end_time <= now  AND  "post_meeting" not in dispatched:
+       → spawn Post Agent (Step 4b)
+       → dispatched.push("post_meeting")
+       → events.jsonl 追加一行
+
+3. NEXT[event.id] = { "dispatched": dispatched }
+```
 
 ### Step 4a: pre_meeting → spawn Pre Agent
 
@@ -83,8 +110,6 @@ lark-cli calendar +agenda --start "<now_minus_35min_iso>" --end "<now_plus_30min
 ```json
 {"agentId":"mla-pre-agent","runtime":"subagent","context":"isolated","mode":"run","cleanup":"keep","runTimeoutSeconds":600,"task":"<上面文本>"}
 ```
-
-Pre Agent 会自己搜索 + spawn Card Agent 发送。Main 不需要再管。
 
 ### Step 4b: post_meeting → spawn Post Agent
 
@@ -106,31 +131,17 @@ Pre Agent 会自己搜索 + spawn Card Agent 发送。Main 不需要再管。
 {"agentId":"mla-post-agent","runtime":"subagent","context":"isolated","mode":"run","cleanup":"keep","runTimeoutSeconds":300,"task":"<上面文本>"}
 ```
 
-Post Agent 会自己搜索 VC + 提取 + spawn Card Agent 发送。Main 不需要再管。
+### Step 5: 覆盖写盘
 
-### Step 4c: cancel_notice → 直接 spawn Card Agent
+将 `NEXT` 覆盖写入 `var/last_scan.json`。
 
-```text
-你是 mla-card-agent。会议已取消，发取消通知卡片。
+## 触发条件总结
 
-会议标题：<summary>
-原定时间：<start> - <end>
-收件人 open_id：<ME>
-
-用 templates/cancel_notice_card.json 模板，send.py 发送。
-```
-
-```json
-{"agentId":"mla-card-agent","runtime":"subagent","context":"isolated","mode":"run","cleanup":"keep","runTimeoutSeconds":120,"task":"<上面文本>"}
-```
-
-### Step 5: 覆盖写 last_scan.json
-
-每条 event 除了 end_time 和 hash，还要保留 `dispatched` 数组（已触发过的 route 列表）。spawn 成功后立即把 route 名 push 进去再写盘。
-
-```json
-{"<event_id>": {"end_time": <unix>, "hash": "sha256:xxx", "dispatched": ["pre_meeting"]}}
-```
+| 条件 | 动作 |
+|------|------|
+| `start_time > now` 且未 dispatched | pre_meeting |
+| `end_time <= now` 且未 dispatched | post_meeting |
+| 已 dispatched | 跳过 |
 
 ## 结束后汇报
 
@@ -138,4 +149,5 @@ Post Agent 会自己搜索 VC + 提取 + spawn Card Agent 发送。Main 不需�
 扫描完成。
 - <summary>：Pre Agent 已处理
 - <summary>：Post Agent 已处理
+（无新事件则输出"无新事件"）
 ```
