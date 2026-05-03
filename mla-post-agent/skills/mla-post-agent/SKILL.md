@@ -79,27 +79,35 @@ lark-cli task +create \
 
 ### Step 5: 生成纪要文本
 
+**send.py 会解析 `1️⃣ 姓名：内容` 格式生成卡片待办表格。必须用此格式。**
+
 ```
 🎯 核心结论
 - 结论1
+- 结论2
 
 📋 决策事项
 - 决策1
 
-✅ 待办事项（已创建 {N} 条任务）
-1️⃣ 待办1
-2️⃣ 待办2
+✅ 待办事项
+1️⃣ 杨天智：监听录制和 demo 搭建
+2️⃣ 杨天智：心跳功能开发
+3️⃣ 杨天智：prompt 调试
 
 💬 关键讨论
 🔹 讨论点1
 
 🔗 相关资源
-▸ AI 纪要：https://...
-▸ 妙记：https://meetings.feishu.cn/minutes/...
+▸ AI 纪要：https://jcneyh7qlo8i.feishu.cn/docx/xxx
+▸ 会议逐字稿：https://jcneyh7qlo8i.feishu.cn/docx/yyy
 ▸ VC 链接：<vchat_url>
 
-⏱ 会议时长：XX 分钟
+⏱ 31 分钟
 ```
+
+- 待办 `1️⃣ 姓名：内容` — 姓名是 display_name 不是占位符
+- 时长只写数字如 `31 分钟`
+- 搜不到写"暂无"
 
 ### Step 6: sessions_spawn Card Agent 发送
 
@@ -118,7 +126,7 @@ lark-cli task +create \
 ```
 
 ```json
-{"agentId":"mla-card-agent","runtime":"subagent","context":"isolated","mode":"run","cleanup":"keep","runTimeoutSeconds":120,"task":"<上面那段文本>"}
+{"agentId":"mla-card-agent","runtime":"subagent","context":"isolated","mode":"run","cleanup":"keep","runTimeoutSeconds":180,"task":"<上面那段文本>"}
 ```
 
 ## 返回

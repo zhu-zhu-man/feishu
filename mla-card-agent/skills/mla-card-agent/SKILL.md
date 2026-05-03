@@ -24,7 +24,7 @@ description: MLA 卡片发送器。被 Main/Pre/Post Agent spawn，接收文本 
 ### Step 2: 发卡片
 
 ```bash
-uv run python scripts/send.py "<文本>" <模板名> <open_id> "<标题>" "<日期>" "<时间范围>" "<组织者>" "<描述>"
+uv run python scripts/send.py "<文本>" <模板名> <open_id> "<标题>" "<日期>" "<时间范围>" "<组织者>" "<会议ID>" "<时长>" "<参会人>"
 ```
 
 **文本中的换行用 `\n`。如果文本太长，把它写到一个临时文件然后 `--data @file` 的方式传？不，send.py 已经处理了所有逻辑。直接传参就行。**
