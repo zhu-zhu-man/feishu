@@ -26,8 +26,7 @@ cancel_notice → Main Agent 直接 spawn Card Agent 发取消通知
 
 | 文件 | 用途 |
 |------|------|
-| `var/last_scan.json` | `{event_id: {end_time, hash}}`，覆盖写 |
-| `var/events.jsonl` | 派发日志，追加写 |
+| `var/last_scan.json` | `{event_id: {end_time, hash, dispatched: []}}`，覆盖写。dispatched 记录已触发过的 route |
 
 ## 工作流
 
@@ -59,10 +58,12 @@ lark-cli calendar +agenda --start "<now_minus_35min_iso>" --end "<now_plus_30min
 
 | 条件 | 动作 |
 |------|------|
-| 在 CURR，不在 PREV | → Step 4a (pre_meeting) |
-| 在 CURR，也在 PREV，end_time 刚跨过 now | → Step 4b (post_meeting) |
-| 在 PREV，不在 CURR，end_time 未到 | → Step 4c (cancel_notice) |
-| 都在，没变化 | 忽略 |
+| 在 CURR，不在 PREV，start_time > now，`pre_meeting` 未在 dispatched 中 | → Step 4a (pre_meeting) |
+| 在 CURR，end_time < now，`post_meeting` 未在 dispatched 中 | → Step 4b (post_meeting) |
+| 在 PREV，不在 CURR，end_time 未到，`cancel_notice` 未在 dispatched 中 | → Step 4c (cancel_notice) |
+| 已 dispatch | 忽略 |
+
+**每条 route 只触发一次。spawn 后立即把 route 加到 last_scan.json 的 dispatched 数组中。**
 
 ### Step 4a: pre_meeting → spawn Pre Agent
 
@@ -125,7 +126,11 @@ Post Agent 会自己搜索 VC + 提取 + spawn Card Agent 发送。Main 不需�
 
 ### Step 5: 覆盖写 last_scan.json
 
-### Step 6: 追加 events.jsonl
+每条 event 除了 end_time 和 hash，还要保留 `dispatched` 数组（已触发过的 route 列表）。spawn 成功后立即把 route 名 push 进去再写盘。
+
+```json
+{"<event_id>": {"end_time": <unix>, "hash": "sha256:xxx", "dispatched": ["pre_meeting"]}}
+```
 
 ## 结束后汇报
 
