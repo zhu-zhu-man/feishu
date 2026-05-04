@@ -1,8 +1,32 @@
 # TOOLS.md — MLA Card Agent
 
-## send.py 用法
+## 依赖工具
 
-### pre_meeting（会前简报）
+### send.py
+
+唯一执行工具。解析 emoji 段落文本 → 填卡片模板 → `lark-cli api` 发送。
+
+**接口：**
+
+```
+uv run python scripts/send.py \
+  --text <str>          # 必需，emoji 段落文本，换行用 \n
+  --template <str>      # 必需，pre_meeting | post_meeting
+  --open-id <str>       # 必需，收件人 open_id
+  --summary <str>       # 会议标题
+  --date <str>          # YYYY-MM-DD
+  --time-range <str>    # HH:MM - HH:MM
+  --organizer <str>     # 组织者姓名
+  --meeting-id <str>    # 会议号
+  --duration <str>      # 时长（仅 post_meeting）
+  --participants <str>  # 参会人（顿号分隔）
+  --meeting-url <str>   # 日历/VC 链接（仅 pre_meeting）
+  --expert-names <str>   # 推荐专家姓名（顿号分隔，仅 pre_meeting）
+  --expert-ids <str>     # 推荐专家 open_id（逗号分隔，仅 pre_meeting）
+  --expert-reasons <str> # 推荐理由（分号分隔，和专家顺序对应）
+```
+
+**pre_meeting 命令模板：**
 
 ```bash
 uv run python scripts/send.py \
@@ -16,10 +40,11 @@ uv run python scripts/send.py \
   --meeting-id "<会议ID>" \
   --participants "<参会人>" \
   --meeting-url "<app_link>" \
-  --expert-ids "<open_id,open_id>"
+  --expert-names "<推荐专家姓名>" \
+  --expert-ids "<推荐专家open_id>"
 ```
 
-### post_meeting（会后纪要）
+**post_meeting 命令模板：**
 
 ```bash
 uv run python scripts/send.py \
@@ -35,24 +60,12 @@ uv run python scripts/send.py \
   --participants "<参会人>"
 ```
 
-## 参数说明
+### 卡片模板
 
-| 参数 | 必需 | 适用模板 | 说明 |
-|------|------|---------|------|
-| `--text` | ✓ | 全部 | emoji 段落文本，换行用 `\n` |
-| `--template` | ✓ | 全部 | `pre_meeting` 或 `post_meeting` |
-| `--open-id` | ✓ | 全部 | 收件人 open_id |
-| `--summary` | | 全部 | 会议标题 |
-| `--date` | | 全部 | 日期 `YYYY-MM-DD` |
-| `--time-range` | | 全部 | 时间范围 `HH:MM - HH:MM` |
-| `--organizer` | | 全部 | 组织者姓名 |
-| `--meeting-id` | | 全部 | 会议号 |
-| `--duration` | | post | 时长 |
-| `--participants` | | 全部 | 参会人，顿号分隔 |
-| `--meeting-url` | | pre | 日历/VC链接 |
-| `--expert-ids` | | pre | 参会人 open_id，逗号分隔 |
+send.py 自动读取，无需手动操作：
+- `templates/pre_meeting_card.json`
+- `templates/post_meeting_card.json`
 
-## 临时文件
+### 临时文件
 
-- 只写 `var/api_body.json`，send.py 发送后自动删除
-- 根目录不放任何文件
+send.py 写入 `var/api_body.json`，发送后自动删除。不碰其他路径。

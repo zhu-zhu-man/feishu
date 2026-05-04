@@ -71,6 +71,8 @@ def main():
     p.add_argument("--participants", default="")
     p.add_argument("--meeting-url", default="")
     p.add_argument("--expert-ids", default="")
+    p.add_argument("--expert-names", default="")
+    p.add_argument("--expert-reasons", default="")
     args = p.parse_args()
 
     text = args.text.replace("\\n", "\n")
@@ -99,8 +101,7 @@ def main():
 
     if tpl_name == "pre_meeting":
         meeting_url = args.meeting_url or ""
-        pcount = str(len([x for x in participants.replace("、","，").split("，") if x.strip()])) if participants else "0"
-        plist = participants or organizer or "暂无"
+        pcount = participants if participants.isdigit() else str(len([x for x in participants.replace("、","，").split("，") if x.strip()])) if participants else "0"
 
         # History: split 📌 section by "已闭环" / "待跟进" markers
         history_text = sec.get("history", "")
@@ -124,33 +125,61 @@ def main():
         h_closed_url = link_urls[0] if len(link_urls) > 0 else meeting_url
         h_pending_url = link_urls[1] if len(link_urls) > 1 else (link_urls[0] if len(link_urls) > 0 else meeting_url)
 
-        # Doc rows: pair 📄 background items with 🔗 URLs
+        # Add status labels back
+        h_closed = f"**✓ 已闭环**\n{h_closed}"
+        h_pending = f"**⏳ 待跟进**\n{h_pending}"
+
+        # Docs: each line carries its own URL at the end
+        # Format: · 标题：描述 · by 作者 · YY/MM/DD · https://url
         bg_lines = [l.strip().lstrip("·- ").strip() for l in sec.get("background", "").split("\n") if l.strip()]
-        doc_urls = re.findall(r'https?://\S+', sec.get("links", ""))
-        doc_rows = []
-        for i, line in enumerate(bg_lines[:3]):  # max 3 docs
-            url = doc_urls[i + 2] if len(doc_urls) > i + 2 else (doc_urls[0] if doc_urls else meeting_url)
-            doc_rows.append({
+        doc_columns = []
+        for line in bg_lines:
+            # Extract URL from end of line
+            url = meeting_url
+            url_m = re.search(r'\s+https?://\S+$', line)
+            if url_m:
+                url = url_m.group().strip()
+                line = line[:url_m.start()].strip()
+            # Parse metadata: · by 作者 · YY/MM/DD
+            author, date = "", ""
+            meta_m = re.search(r'·\s*by\s+(.+?)\s*·\s*(\d{2}/\d{2}/\d{2})', line)
+            if meta_m:
+                author = meta_m.group(1).strip()
+                date = meta_m.group(2).strip()
+                line = line[:meta_m.start()].strip()
+            # Split title + desc
+            m = re.split(r'[：:]', line, maxsplit=1)
+            title = m[0].strip()
+            desc = m[1].strip() if len(m) > 1 else ""
+            header = f"**{title}**"
+            if author: header += f" · by {author}"
+            if date: header += f" · {date}"
+            content = header + (f"\n{desc}" if desc else "")
+            doc_columns.append({
                 "tag": "column", "width": "weighted", "weight": 1,
-                "background_style": "blue-50", "padding": "12px",
+                "background_style": "grey-50", "padding": "8px",
                 "elements": [{
                     "tag": "interactive_container",
                     "behaviors": [{"type": "open_url", "default_url": url}],
-                    "elements": [{"tag": "markdown", "content": f"**{line[:30]}{'...' if len(line) > 30 else ''}**\n\n{line}"}]
+                    "elements": [{"tag": "markdown", "content": content}]
                 }]
             })
-        doc_rows_json = json.dumps(doc_rows, ensure_ascii=False)
+        doc_rows_json = json.dumps(doc_columns, ensure_ascii=False)
 
-        # Expert rows: use <person> tags if --expert-ids provided, else plain names
-        expert_names = [x.strip() for x in plist.replace("、","，").split("，") if x.strip()]
+        # Expert rows: from --expert-names + --expert-ids + --expert-reasons
+        expert_names = [x.strip() for x in args.expert_names.replace("、","，").split("，") if x.strip()] if args.expert_names else []
         expert_ids = [x.strip() for x in args.expert_ids.split(",") if x.strip()] if args.expert_ids else []
-        if expert_ids and len(expert_ids) == len(expert_names):
-            expert_rows = "\n".join([
-                f"<person id='{expert_ids[i]}' show_name=true show_avatar=true style='normal'></person>"
-                for i in range(len(expert_names))
-            ])
+        expert_reasons = [x.strip() for x in args.expert_reasons.split("；") if x.strip()] if args.expert_reasons else []
+        if expert_names and expert_ids and len(expert_ids) == len(expert_names):
+            lines = []
+            for i in range(len(expert_names)):
+                reason = f" — {expert_reasons[i]}" if i < len(expert_reasons) else ""
+                lines.append(f"<person id='{expert_ids[i]}' show_name=true show_avatar=true style='normal'></person>{reason}")
+            expert_rows = "\n".join(lines)
+        elif expert_names:
+            expert_rows = "\n".join([f"• {n}" for n in expert_names])
         else:
-            expert_rows = "\n".join([f"• {n}" for n in expert_names]) if expert_names else "暂无"
+            expert_rows = "暂无"
 
         # Risk items
         risk_items = sec.get("risks", "暂无风险提示")
@@ -162,7 +191,6 @@ def main():
             "{{meeting_time_range}}": time_range,
             "{{meeting_url}}": meeting_url,
             "{{participant_count}}": pcount,
-            "{{participants_list}}": plist,
             "{{history_closed}}": h_closed,
             "{{history_closed_url}}": h_closed_url,
             "{{history_pending}}": h_pending,

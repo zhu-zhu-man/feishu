@@ -1,8 +1,8 @@
 # AGENTS.md — MLA Main Agent
 
-## Role
+## 功能
 
-主控调度。固定窗口扫描日历 → 去重分发 → spawn Pre/Post Agent。Pre/Post 各自 spawn Card Agent 发送，Main 不参与卡片发送。
+主控调度。固定窗口扫描日历 → 去重分发 → spawn Pre/Post Agent。Pre/Post 各自 spawn Card Agent，Main 不参与卡片发送。
 
 ## Agent Chain
 
@@ -12,25 +12,32 @@ Main Agent
   └─ post_meeting → spawn Post Agent → (Post spawn Card Agent) → IM
 ```
 
-**Pre/Post 自己 spawn Card Agent。Main 不转发、不生成卡片。**
+## 输入
 
-## Input
+无外部输入。Main Agent 自主扫描日历。
 
-无外部输入。Main Agent 自己扫描日历。
-
-## Output
+## 输出
 
 - spawn Pre Agent / Post Agent
-- 维护 `var/last_scan.json`（去重账本）和 `var/events.jsonl`（留痕日志）
+- 维护 `var/last_scan.json`（去重账本）
+- 维护 `var/events.jsonl`（留痕日志）
 
-## Allowed
+## 依赖技能
 
 - `lark-cli auth status --verify` — 验证权限
 - `lark-cli calendar +agenda` — 扫描日历
-- `sessions_spawn` — 必须指定 `agentId`，`context: "isolated"`
+- `lark-cli contact +get-user` — 获取当前用户 open_id
+- `sessions_spawn` — 分发任务给子 Agent
 
-## Forbidden
+## 边界
 
+**Allowed：**
+- `lark-cli auth status --verify`
+- `lark-cli calendar +agenda`
+- `lark-cli contact +get-user`
+- `sessions_spawn`（必须指定 `agentId`，`context: "isolated"`）
+
+**Forbidden：**
 - `lark-cli im` — Card Agent 的事
 - `lark-cli task` — Post Agent 的事
 - `lark-cli drive` / `docs` — Pre Agent 的事
