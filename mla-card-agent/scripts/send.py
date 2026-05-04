@@ -69,6 +69,8 @@ def main():
     p.add_argument("--meeting-id", default="")
     p.add_argument("--duration", default="")
     p.add_argument("--participants", default="")
+    p.add_argument("--meeting-url", default="")
+    p.add_argument("--expert-ids", default="")
     args = p.parse_args()
 
     text = args.text.replace("\\n", "\n")
@@ -96,20 +98,83 @@ def main():
     action_items_rows = json.dumps(action_items, ensure_ascii=False)
 
     if tpl_name == "pre_meeting":
+        meeting_url = args.meeting_url or ""
+        pcount = str(len([x for x in participants.replace("、","，").split("，") if x.strip()])) if participants else "0"
+        plist = participants or organizer or "暂无"
+
+        # History: split 📌 section by "已闭环" / "待跟进" markers
+        history_text = sec.get("history", "")
+        if "已闭环" in history_text and "待跟进" in history_text:
+            parts_closed = history_text.split("待跟进")
+            h_closed = parts_closed[0].replace("已闭环", "").strip().strip("：:").strip()
+            h_pending = parts_closed[1].strip().strip("：:").strip() if len(parts_closed) > 1 else ""
+        elif "已闭环" in history_text:
+            h_closed = history_text.replace("已闭环", "").strip().strip("：:").strip()
+            h_pending = "暂无"
+        elif "待跟进" in history_text:
+            h_closed = "暂无"
+            h_pending = history_text.replace("待跟进", "").strip().strip("：:").strip()
+        else:
+            h_closed = history_text if history_text else "暂无历史会议结论"
+            h_pending = "暂无待跟进事项"
+
+        # History URLs: extract from 🔗 section
+        links_text = sec.get("links", "")
+        link_urls = re.findall(r'https?://\S+', links_text)
+        h_closed_url = link_urls[0] if len(link_urls) > 0 else meeting_url
+        h_pending_url = link_urls[1] if len(link_urls) > 1 else (link_urls[0] if len(link_urls) > 0 else meeting_url)
+
+        # Doc rows: pair 📄 background items with 🔗 URLs
+        bg_lines = [l.strip().lstrip("·- ").strip() for l in sec.get("background", "").split("\n") if l.strip()]
+        doc_urls = re.findall(r'https?://\S+', sec.get("links", ""))
+        doc_rows = []
+        for i, line in enumerate(bg_lines[:3]):  # max 3 docs
+            url = doc_urls[i + 2] if len(doc_urls) > i + 2 else (doc_urls[0] if doc_urls else meeting_url)
+            doc_rows.append({
+                "tag": "column", "width": "weighted", "weight": 1,
+                "background_style": "blue-50", "padding": "12px",
+                "elements": [{
+                    "tag": "interactive_container",
+                    "behaviors": [{"type": "open_url", "default_url": url}],
+                    "elements": [{"tag": "markdown", "content": f"**{line[:30]}{'...' if len(line) > 30 else ''}**\n\n{line}"}]
+                }]
+            })
+        doc_rows_json = json.dumps(doc_rows, ensure_ascii=False)
+
+        # Expert rows: use <person> tags if --expert-ids provided, else plain names
+        expert_names = [x.strip() for x in plist.replace("、","，").split("，") if x.strip()]
+        expert_ids = [x.strip() for x in args.expert_ids.split(",") if x.strip()] if args.expert_ids else []
+        if expert_ids and len(expert_ids) == len(expert_names):
+            expert_rows = "\n".join([
+                f"<person id='{expert_ids[i]}' show_name=true show_avatar=true style='normal'></person>"
+                for i in range(len(expert_names))
+            ])
+        else:
+            expert_rows = "\n".join([f"• {n}" for n in expert_names]) if expert_names else "暂无"
+
+        # Risk items
+        risk_items = sec.get("risks", "暂无风险提示")
+        risk_items = "\n".join([f"• {l.strip().lstrip('·- ').strip()}" for l in risk_items.split("\n") if l.strip()])
+
         repl = {
             "{{meeting_summary}}": summary,
-            "{{meeting_description}}": meeting_id or "",
             "{{meeting_date}}": date,
             "{{meeting_time_range}}": time_range,
-            "{{organizer}}": organizer or "未知",
-            "{{one_sentence_goal}}": sec.get("goal", "（未提供）"),
-            "{{background_items}}": sec.get("background", "暂无"),
-            "{{history_decisions}}": sec.get("history", "暂无"),
-            "{{open_risks}}": sec.get("risks", "暂无"),
-            "{{suggested_agenda}}": sec.get("agenda", "（未提供）"),
-            "{{related_links}}": sec.get("links", "暂无"),
+            "{{meeting_url}}": meeting_url,
+            "{{participant_count}}": pcount,
+            "{{participants_list}}": plist,
+            "{{history_closed}}": h_closed,
+            "{{history_closed_url}}": h_closed_url,
+            "{{history_pending}}": h_pending,
+            "{{history_pending_url}}": h_pending_url,
+            "{{risk_items}}": risk_items,
+            "{{expert_rows}}": expert_rows,
             "{{footer}}": "🤖 MLA Pre Agent · 数据来源：飞书文档搜索 + AI 总结",
         }
+        for k, v in repl.items():
+            tmpl_str = replace(tmpl_str, k, v)
+
+        tmpl_str = tmpl_str.replace('"{{doc_rows}}"', doc_rows_json)
     else:
         repl = {
             "{{meeting_time_block}}": meeting_time_block,

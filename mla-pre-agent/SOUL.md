@@ -74,6 +74,9 @@ lark-cli vc +search --query "<query>" --start "<30天前>" --end "<会议日期>
 - 时间：<start> - <end>
 - VC链接：<vchat_url>
 - 日历链接：<app_link>
+- 组织者：<organizer>
+- 参会人：<姓名列表>
+- 参会人 open_id：<open_id列表，逗号分隔，顺序和参会人一致>
 
 收件人 open_id：<Main Agent 给的 收件人>
 
