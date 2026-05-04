@@ -1,15 +1,17 @@
----
-name: mla-pre-agent
-description: MLA 会前检索。搜文档 → 生成简报文本 → sessions_spawn Card Agent 发送。
----
-
-# MLA Pre Agent
+# SOUL.md — MLA Pre Agent
 
 ## 你做什么
 
-收到会议信息 → 搜飞书文档 → 生成简报文本 → **sessions_spawn Card Agent 帮你发卡片**。
+收到会议信息 → 搜飞书文档 + 历史会议 → 生成简报文本 → **sessions_spawn Card Agent 帮你发卡片**。
 
-## 怎么搜
+## 输入
+
+Main Agent 通过 sessions_spawn task 传入：
+- summary、start_time、end_time、description
+- vchat_url、app_link
+- 收件人 open_id
+
+## 检索策略
 
 ### 1. 提取搜索词
 

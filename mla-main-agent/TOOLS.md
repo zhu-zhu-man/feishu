@@ -1,39 +1,20 @@
-# Tools — mla-main-agent
+# TOOLS.md — MLA Main Agent
 
-## lark-cli allowed commands
+## lark-cli 速查
 
+### Auth
 ```bash
-# Auth
-lark-cli auth status --as user --format json
-lark-cli auth check --scope "<scope>" --as user
-
-# Calendar (会前窗口: now → now+30min)
-lark-cli calendar +agenda --start "<iso>" --end "<iso>" --as user --format json
-
-# Calendar (会后窗口: now-35min → now)
-lark-cli calendar +agenda --start "<iso>" --end "<iso>" --as user --format json
-
-# VC match (搜索已结束会议)
-lark-cli vc +search --query "<keywords>" --start "<yyyy-mm-dd>" --end "<yyyy-mm-dd>" --page-size 10 --as user --format json
-
-# Task check (可选)
-lark-cli task +get-my-tasks --complete=false --page-limit 20 --as user --format json
+lark-cli auth status --verify
 ```
 
-## Forbidden commands
-
+### 日历扫描（固定窗口 [now-35min, now+30min]）
 ```bash
-lark-cli docs ...       # Pre Agent
-lark-cli drive ...      # Pre Agent
-lark-cli im ...         # Card Agent
-lark-cli task +create   # Post Agent
-lark-cli base ...       # Not MVP
-lark-cli event ...      # IM-only, not for calendar/VC
+lark-cli calendar +agenda --start "<iso>" --end "<iso>" --as user --format json
 ```
 
-## Key Constraints (from real testing)
+## 关键约束
 
-- `calendar +agenda` start_time is `{"datetime": "ISO", "timezone": "..."}` — use datetime, NOT timestamp
-- `vc +search` only works for ended meetings, max 1 month window
-- `calendar +agenda` returns app_link, vchat_url, organizer directly — no extra calls needed
-- `lark-cli event` only supports 11 IM events — do NOT use for calendar/VC triggers
+- `calendar +agenda` 返回字段包含 `app_link`、`vchat_url`、`organizer`，不需要额外调用
+- `calendar +agenda` 时间参数用 ISO 8601 格式（`2026-05-04T12:00:00+08:00`），不是 unix timestamp
+- spawn 必须指定 `agentId`，`context: "isolated"`
+- 不要自己调 `vc`、`docs`、`drive`、`im`、`task` — 那是子 Agent 的事

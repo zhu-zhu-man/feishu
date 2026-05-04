@@ -1,1 +1,126 @@
-{"body":{"elements":[{"columns":[{"elements":[{"content":"**【{{meeting_summary}}】**\n{{meeting_description}}","tag":"markdown"}],"tag":"column","weight":2,"width":"weighted"},{"elements":[{"content":"🕐 {{meeting_date}}\n{{meeting_time_range}} (UTC+8)","tag":"markdown"}],"tag":"column","weight":1,"width":"weighted"}],"flex_mode":"stretch","horizontal_spacing":"12px","margin":"0px","tag":"column_set"},{"content":"👤 组织者：{{organizer}}","margin":"0px","tag":"markdown"},{"columns":[{"background_style":"blue-50","elements":[{"content":"**<font color='blue'>🎯 会议目标</font>**","tag":"markdown"},{"content":"{{one_sentence_goal}}","tag":"markdown"}],"padding":"12px","tag":"column","weight":1,"width":"weighted"}],"flex_mode":"stretch","margin":"0px","tag":"column_set"},{"columns":[{"background_style":"blue-50","elements":[{"content":"**<font color='blue'>📄 相关背景</font>**","tag":"markdown"},{"content":"{{background_items}}","tag":"markdown"}],"padding":"12px","tag":"column","weight":1,"width":"weighted"}],"flex_mode":"stretch","margin":"0px","tag":"column_set"},{"content":"⚠️ <font color='red'>风险提示</font>\n{{open_risks}}","margin":"0px","tag":"markdown"},{"margin":"0px","tag":"hr"},{"content":"**📋 建议议程**\n{{suggested_agenda}}","margin":"0px","tag":"markdown"},{"margin":"0px","tag":"hr"},{"content":"**🔗 相关文档**\n{{related_links}}","margin":"0px","tag":"markdown"},{"content":"🤖 MLA Pre Agent · {{retrieval_status}}","margin":"0px","tag":"markdown"}]},"header":{"padding":"12px 8px 12px 8px","template":"blue","title":{"content":"📋 会前简报","tag":"plain_text"}},"schema":"2.0"}
+{
+    "body": {
+        "elements": [
+            {
+                "columns": [
+                    {
+                        "elements": [
+                            {
+                                "content": "**【{{meeting_summary}}】**\n{{meeting_description}}",
+                                "tag": "markdown"
+                            }
+                        ],
+                        "tag": "column",
+                        "weight": 2,
+                        "width": "weighted"
+                    },
+                    {
+                        "elements": [
+                            {
+                                "content": "🕐 {{meeting_date}}\n{{meeting_time_range}} (UTC+8)",
+                                "tag": "markdown"
+                            }
+                        ],
+                        "tag": "column",
+                        "weight": 1,
+                        "width": "weighted"
+                    }
+                ],
+                "flex_mode": "stretch",
+                "horizontal_spacing": "12px",
+                "margin": "0px",
+                "tag": "column_set"
+            },
+            {
+                "content": "👤 组织者：{{organizer}}",
+                "margin": "0px",
+                "tag": "markdown"
+            },
+            {
+                "columns": [
+                    {
+                        "background_style": "blue-50",
+                        "elements": [
+                            {
+                                "content": "**<font color='blue'>🎯 会议目标</font>**",
+                                "tag": "markdown"
+                            },
+                            {
+                                "content": "{{one_sentence_goal}}",
+                                "tag": "markdown"
+                            }
+                        ],
+                        "padding": "12px",
+                        "tag": "column",
+                        "weight": 1,
+                        "width": "weighted"
+                    }
+                ],
+                "flex_mode": "stretch",
+                "margin": "0px",
+                "tag": "column_set"
+            },
+            {
+                "columns": [
+                    {
+                        "background_style": "blue-50",
+                        "elements": [
+                            {
+                                "content": "**<font color='blue'>📄 相关背景</font>**",
+                                "tag": "markdown"
+                            },
+                            {
+                                "content": "{{background_items}}",
+                                "tag": "markdown"
+                            }
+                        ],
+                        "padding": "12px",
+                        "tag": "column",
+                        "weight": 1,
+                        "width": "weighted"
+                    }
+                ],
+                "flex_mode": "stretch",
+                "margin": "0px",
+                "tag": "column_set"
+            },
+            {
+                "content": "⚠️ <font color='red'>风险提示</font>\n{{open_risks}}",
+                "margin": "0px",
+                "tag": "markdown"
+            },
+            {
+                "margin": "0px",
+                "tag": "hr"
+            },
+            {
+                "content": "**📋 建议议程**\n{{suggested_agenda}}",
+                "margin": "0px",
+                "tag": "markdown"
+            },
+            {
+                "margin": "0px",
+                "tag": "hr"
+            },
+            {
+                "content": "**🔗 相关文档**\n{{related_links}}",
+                "margin": "0px",
+                "tag": "markdown"
+            },
+            {
+                "content": "{{footer}}",
+                "margin": "0px",
+                "tag": "markdown"
+            }
+        ]
+    },
+    "header": {
+        "padding": "12px 8px 12px 8px",
+        "template": "blue",
+        "title": {
+            "content": "📋 会前简报",
+            "tag": "plain_text"
+        }
+    },
+    "schema": "2.0"
+}

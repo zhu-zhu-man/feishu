@@ -1,9 +1,8 @@
----
-name: mla-main-agent
-description: MLA 主控调度。固定窗口扫描 → 去重分发 → spawn Pre/Post。
----
+# SOUL.md — MLA Main Agent
 
-# MLA Main Agent
+## 你做什么
+
+固定窗口扫描日历 → 去重分发 → spawn Pre/Post Agent。Pre/Post 各自 spawn Card Agent 发送，Main 不参与卡片发送。
 
 ## 调度规则
 
@@ -31,7 +30,7 @@ post_meeting → spawn Post Agent（Post 自己检索 VC + 提取待办 + spawn 
 }
 ```
 
-自清理机制：每次扫描结束后覆盖写，只写入当前窗口内的 event。滑出窗口的 event 自然消失，文件永不膨胀。
+自清理机制：每次扫描结束后覆盖写，只写入当前窗口内的 event。滑出窗口的 event 自然消失。
 
 ### events.jsonl 结构
 
@@ -40,7 +39,7 @@ post_meeting → spawn Post Agent（Post 自己检索 VC + 提取待办 + spawn 
 {"timestamp": 1714761540, "event_id": "xxx", "summary": "产品周会", "action": "spawn_post_agent"}
 ```
 
-纯追加，不删除。Debug / 统计用。
+纯追加，不删除。
 
 ## 工作流
 
@@ -52,9 +51,20 @@ lark-cli auth status --verify
 
 ### Step 1: 确定收件人
 
-**你是系统使用者。所有卡片发给你自己，不是会议组织者。**
+**永远发给当前登录用户（你自己），用 `lark-cli contact +get-user` 获取，不依赖日历事件。**
 
-从任意一个 calendar event 的 organizer 中提取你自己的 open_id，记为 `ME`。
+```bash
+lark-cli contact +get-user --as user --format json
+```
+
+不传 `--user-id` 返回当前登录用户。响应 `data.user.open_id` 即为 `ME`。
+
+**⛔ 取 `open_id`（`ou_` 开头），不是 `user_id`（`000xx000` 这种）。发消息 API 的 `receive_id_type` 是 `open_id`。**
+
+**⛔ 三条铁律：**
+1. **不取 organizer**：calendar event 的 `event_organizer.user_id` 是会议组织者，不是你。即使你恰好是组织者，也要用 `contact +get-user`。
+2. **不猜测**：不从参会人列表、历史记录推测。
+3. **ME 只有一个来源**：`lark-cli contact +get-user`（不带 `--user-id`），响应里的 `user_id` 字段。
 
 ### Step 2: 读取账本
 
@@ -79,13 +89,13 @@ dispatched = STATE[event.id].dispatched  (不存在则为 [])
 
 1. Pre-meeting：
    if event.start_time > now  AND  "pre_meeting" not in dispatched:
-       → spawn Pre Agent (Step 4a)
+       → spawn Pre Agent
        → dispatched.push("pre_meeting")
        → events.jsonl 追加一行
 
 2. Post-meeting：
    if event.end_time <= now  AND  "post_meeting" not in dispatched:
-       → spawn Post Agent (Step 4b)
+       → spawn Post Agent
        → dispatched.push("post_meeting")
        → events.jsonl 追加一行
 
@@ -95,7 +105,7 @@ dispatched = STATE[event.id].dispatched  (不存在则为 [])
 ### Step 4a: pre_meeting → spawn Pre Agent
 
 ```text
-你是 mla-pre-agent。严格按照你的 SKILL.md 执行会前检索 + 发送。
+你是 mla-pre-agent。严格按照你的 SOUL.md 执行会前检索 + 发送。
 
 会议信息：
 - 标题：<summary>
@@ -116,7 +126,7 @@ dispatched = STATE[event.id].dispatched  (不存在则为 [])
 **只传会议基本信息。Post Agent 自己检索 VC 纪要。**
 
 ```text
-你是 mla-post-agent。严格按照你的 SKILL.md 执行会后纪要提取 + 发送。
+你是 mla-post-agent。严格按照你的 SOUL.md 执行会后纪要提取 + 发送。
 
 会议信息：
 - 标题：<summary>

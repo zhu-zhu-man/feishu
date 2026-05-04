@@ -2,9 +2,12 @@
 Card Agent — one temp file only (var/api_body.json).
 
 Usage:
-  uv run python scripts/send.py "<text>" <template_name> <open_id> <summary> <date> <time_range> [organizer] [meeting_id] [duration] [participants]
+  uv run python scripts/send.py \\
+    --text "..." --template post_meeting --open-id ou_xxx \\
+    --summary "标题" --date "2026-04-27" --time-range "21:15 - 21:46" \\
+    --organizer "姓名" --meeting-id "302614221" --duration "31 分钟" --participants "张三、李四"
 """
-import json, os, re, subprocess, sys
+import argparse, json, os, re, subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VAR = os.path.join(ROOT, "var")
@@ -29,9 +32,6 @@ def parse_sections(text):
                 if key and lines:
                     sections[key] = "\n".join(lines)
                 key, lines = k, []
-                rest = line[len(emoji):].strip()
-                if rest:
-                    lines.append(rest)
                 matched = True
                 break
         if not matched and key:
@@ -42,13 +42,11 @@ def parse_sections(text):
 
 
 def parse_action_items(todos_text):
-    """Parse '1️⃣ name：task' lines into table rows."""
     if not todos_text:
         return []
     items = []
     for line in todos_text.split("\n"):
         line = line.strip()
-        # Match: 1️⃣ name：task  or  1️⃣ name: task
         m = re.match(r'([1-9]️⃣|🔟)\s*(.+?)[：:](.+)', line)
         if m:
             items.append({"id": m.group(1), "assignee": m.group(2).strip(), "task": m.group(3).strip()})
@@ -60,16 +58,29 @@ def replace(tmpl_str, k, v):
 
 
 def main():
-    if len(sys.argv) < 7:
-        print("Usage: uv run python scripts/send.py <text> <template> <open_id> <summary> <date> <time_range> [organizer] [meeting_id] [duration] [participants]", file=sys.stderr)
-        sys.exit(1)
+    p = argparse.ArgumentParser()
+    p.add_argument("--text", required=True)
+    p.add_argument("--template", required=True, choices=["pre_meeting", "post_meeting"])
+    p.add_argument("--open-id", required=True)
+    p.add_argument("--summary", default="")
+    p.add_argument("--date", default="")
+    p.add_argument("--time-range", default="")
+    p.add_argument("--organizer", default="")
+    p.add_argument("--meeting-id", default="")
+    p.add_argument("--duration", default="")
+    p.add_argument("--participants", default="")
+    args = p.parse_args()
 
-    text, tpl_name, open_id = sys.argv[1], sys.argv[2], sys.argv[3]
-    summary, date, time_range = sys.argv[4], sys.argv[5], sys.argv[6]
-    organizer = sys.argv[7] if len(sys.argv) > 7 else ""
-    meeting_id = sys.argv[8] if len(sys.argv) > 8 else ""
-    duration = sys.argv[9] if len(sys.argv) > 9 else ""
-    participants = sys.argv[10] if len(sys.argv) > 10 else ""
+    text = args.text.replace("\\n", "\n")
+    tpl_name = args.template
+    open_id = args.open_id
+    summary = args.summary
+    date = args.date
+    time_range = args.time_range
+    organizer = args.organizer
+    meeting_id = args.meeting_id
+    duration = args.duration
+    participants = args.participants
 
     with open(os.path.join(ROOT, "templates", f"{tpl_name}_card.json"), "r", encoding="utf-8") as f:
         template = json.load(f)
@@ -79,44 +90,43 @@ def main():
     action_items = parse_action_items(sec.get("todos", ""))
     action_count = len(action_items) if action_items else 0
 
-    # Meeting time block for post template
     meeting_time_block = f"**{summary}**\n{date} {time_range} (GMT+8)"
-
-    # Participants block
     participants_block = participants or organizer or "暂无"
-
-    # Duration from text section or argument
     dur = duration or sec.get("duration", "")
+    action_items_rows = json.dumps(action_items, ensure_ascii=False)
 
-    repl = {
-        "{{meeting_summary}}": summary,
-        "{{meeting_description}}": (sys.argv[8] if len(sys.argv) > 8 else "")[:200] if tpl_name == "pre_meeting" else "",
-        "{{meeting_date}}": date,
-        "{{meeting_time_range}}": time_range,
-        "{{organizer}}": organizer or "未知",
-        "{{one_sentence_goal}}": sec.get("goal", "（未提供）"),
-        "{{background_items}}": sec.get("background", "暂无"),
-        "{{history_decisions}}": sec.get("history", "暂无"),
-        "{{open_risks}}": sec.get("risks", "暂无"),
-        "{{suggested_agenda}}": sec.get("agenda", "（未提供）"),
-        "{{related_links}}": sec.get("links", "暂无"),
-        "{{docs_searched}}": "0", "{{docs_read}}": "0",
-        "{{retrieval_status}}": "MLA Pre Agent",
-        # Post meeting template
-        "{{meeting_time_block}}": meeting_time_block,
-        "{{participants_block}}": participants_block,
-        "{{meeting_id}}": meeting_id or "—",
-        "{{duration_minutes}}": dur or "—",
-        "{{core_conclusions}}": sec.get("goal", "暂无"),
-        "{{decisions}}": sec.get("agenda", "暂无"),
-        "{{key_discussion_points}}": sec.get("discussion", "暂无"),
-        "{{footer}}": f"🤖 MLA Post Agent · {action_count}项待办 · 数据来源：飞书会议转写 + AI 总结",
-    }
+    if tpl_name == "pre_meeting":
+        repl = {
+            "{{meeting_summary}}": summary,
+            "{{meeting_description}}": meeting_id or "",
+            "{{meeting_date}}": date,
+            "{{meeting_time_range}}": time_range,
+            "{{organizer}}": organizer or "未知",
+            "{{one_sentence_goal}}": sec.get("goal", "（未提供）"),
+            "{{background_items}}": sec.get("background", "暂无"),
+            "{{history_decisions}}": sec.get("history", "暂无"),
+            "{{open_risks}}": sec.get("risks", "暂无"),
+            "{{suggested_agenda}}": sec.get("agenda", "（未提供）"),
+            "{{related_links}}": sec.get("links", "暂无"),
+            "{{footer}}": "🤖 MLA Pre Agent · 数据来源：飞书文档搜索 + AI 总结",
+        }
+    else:
+        repl = {
+            "{{meeting_time_block}}": meeting_time_block,
+            "{{participants_block}}": participants_block,
+            "{{meeting_id}}": meeting_id or "—",
+            "{{duration_minutes}}": dur or "—",
+            "{{core_conclusions}}": sec.get("goal", "暂无"),
+            "{{decisions}}": sec.get("agenda", "暂无"),
+            "{{key_discussion_points}}": sec.get("discussion", "暂无"),
+            "{{related_links}}": sec.get("links", "暂无"),
+            "{{footer}}": f"🤖 MLA Post Agent · {action_count}项待办 · 数据来源：飞书会议转写 + AI 总结",
+        }
+
     for k, v in repl.items():
         tmpl_str = replace(tmpl_str, k, v)
 
-    # Action items rows (no quotes around the JSON array)
-    tmpl_str = tmpl_str.replace('"{{action_items_rows}}"', json.dumps(action_items, ensure_ascii=False))
+    tmpl_str = tmpl_str.replace('"{{action_items_rows}}"', action_items_rows)
 
     card = json.loads(tmpl_str)
     card_compact = json.dumps(card, ensure_ascii=False, separators=(",", ":"))

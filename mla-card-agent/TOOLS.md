@@ -1,44 +1,31 @@
-# TOOLS.md - Local Notes
+# TOOLS.md — MLA Card Agent
 
-Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
+## send.py 用法
 
-## What Goes Here
-
-Things like:
-
-- Camera names and locations
-- SSH hosts and aliases
-- Preferred voices for TTS
-- Speaker/room names
-- Device nicknames
-- Anything environment-specific
-
-## Examples
-
-```markdown
-### Cameras
-
-- living-room → Main area, 180° wide angle
-- front-door → Entrance, motion-triggered
-
-### SSH
-
-- home-server → 192.168.1.100, user: admin
-
-### TTS
-
-- Preferred voice: "Nova" (warm, slightly British)
-- Default speaker: Kitchen HomePod
+```bash
+uv run python scripts/send.py "<文本>" <模板名> <open_id> "<标题>" "<日期>" "<时间范围>" "<组织者>" "<会议ID>" "<时长>" "<参会人>"
 ```
 
-## Why Separate?
+### 参数说明
 
-Skills are shared. Your setup is yours. Keeping them apart means you can update skills without losing your notes, and share skills without leaking your infrastructure.
+| 位置 | 参数 | 示例 |
+|------|------|------|
+| 1 | 文本（emoji 段落格式） | `"🎯 目标\n- 结论1\n"` |
+| 2 | 模板名 | `pre_meeting` / `post_meeting` |
+| 3 | open_id | `ou_xxx` |
+| 4 | 会议标题 | `产品周会` |
+| 5 | 日期 | `2026-05-04` |
+| 6 | 时间范围 | `14:00 - 14:30` |
+| 7 | 组织者 | `张三` |
+| 8 | 会议ID | `302 614 221` |
+| 9 | 时长 | `31 分钟` |
+| 10 | 参会人 | `张三、李四` |
 
----
+### 文本中的换行
 
-Add whatever helps you do your job. This is your cheat sheet.
+用 `\n`。send.py 负责解析 emoji 段落（🎯📄📌⚠️📋🔗✅💬⏱）和 `1️⃣ 姓名：内容` 格式的待办。
 
-## Related
+### 临时文件
 
-- [Agent workspace](/concepts/agent-workspace)
+- 只写 `var/api_body.json`，send.py 发送后自动删除
+- 根目录不放任何文件
